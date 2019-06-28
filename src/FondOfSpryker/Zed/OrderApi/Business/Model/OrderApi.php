@@ -12,6 +12,7 @@ use Generated\Shared\Transfer\ApiDataTransfer;
 use Generated\Shared\Transfer\ApiItemTransfer;
 use Generated\Shared\Transfer\ItemTransfer;
 use Generated\Shared\Transfer\OrderItemsTransfer;
+use Generated\Shared\Transfer\OrderResponseTransfer;
 use Generated\Shared\Transfer\OrderTransfer;
 use Spryker\Zed\Api\Business\Exception\EntityNotFoundException;
 use Spryker\Zed\Availability\Persistence\AvailabilityQueryContainerInterface;
@@ -80,29 +81,29 @@ class OrderApi implements OrderApiInterface
 
         $orderResponseTransfer = $this->salesFacade->addOrder($orderTransfer);
 
-        $orderTransfer = $this->getOrderFromResponse($invoiceResponseTransfer);
+        $orderTransfer = $this->getOrderFromResponse($orderResponseTransfer);
 
-        return $this->apiQueryContainer->createApiItem($invoiceTransfer, $invoiceTransfer->getIdInvoice());
+        return $this->apiQueryContainer->createApiItem($orderTransfer, $orderTransfer->getIdSalesOrder());
     }
 
     /**
-     * @param \Generated\Shared\Transfer\InvoiceResponseTransfer $invoiceResponseTransfer
+     * @param \Generated\Shared\Transfer\OrderResponseTransfer $orderResponseTransfer
      *
-     * @return \Generated\Shared\Transfer\InvoiceTransfer
+     * @return \Generated\Shared\Transfer\OrderTransfer
      */
-    protected function getInvoiceFromResponse(InvoiceResponseTransfer $invoiceResponseTransfer): InvoiceTransfer
+    protected function getOrderFromResponse(OrderResponseTransfer $orderResponseTransfer): OrderTransfer
     {
-        $invoiceTransfer = $invoiceResponseTransfer->getInvoiceTransfer();
+        $orderTransfer = $orderResponseTransfer->getOrderTransfer();
 
-        if (!$invoiceTransfer) {
+        if (!$orderTransfer) {
             $errors = [];
-            foreach ($invoiceResponseTransfer->getErrors() as $error) {
+            foreach ($orderResponseTransfer->getErrors() as $error) {
                 $errors[] = $error->getMessage();
             }
 
-            throw new EntityNotSavedException('Could not save creditmemo: ' . implode(',', $errors));
+            throw new EntityNotSavedException('Could not save order: ' . implode(',', $errors));
         }
 
-        return $this->invoiceFacade->findInvoiceById($invoiceTransfer);
+        return $this->salesFacade->findOrderById($orderTransfer);
     }
 }

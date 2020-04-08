@@ -11,14 +11,9 @@ class OrderApiValidator implements OrderApiValidatorInterface
      *
      * @return array
      */
-    public function validate(ApiDataTransfer $apiDataTransfer)
+    public function validate(ApiDataTransfer $apiDataTransfer): array
     {
-        $data = $apiDataTransfer->getData();
-
-        $errors = [];
-        //$errors = $this->assertRequiredField($data, '', $errors);
-
-        return $errors;
+        return [];
     }
 
     /**
@@ -28,7 +23,7 @@ class OrderApiValidator implements OrderApiValidatorInterface
      *
      * @return array
      */
-    protected function assertRequiredField(array $data, $field, array $errors)
+    protected function assertRequiredField(array $data, $field, array $errors): array
     {
         if (!isset($data[$field]) || !array_key_exists($field, $data)) {
             $message = sprintf('Missing value for required field "%s"', $field);

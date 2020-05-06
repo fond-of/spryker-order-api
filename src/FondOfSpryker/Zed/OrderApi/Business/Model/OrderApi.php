@@ -187,7 +187,7 @@ class OrderApi implements OrderApiInterface
 
         if ($orderTransfer === null) {
             throw new EntityNotFoundException(
-                'Could not found order.',
+                'Could not find order.',
                 ApiConfig::HTTP_CODE_NOT_FOUND
             );
         }

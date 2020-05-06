@@ -15,21 +15,4 @@ class OrderApiValidator implements OrderApiValidatorInterface
     {
         return [];
     }
-
-    /**
-     * @param array $data
-     * @param string $field
-     * @param array $errors
-     *
-     * @return array
-     */
-    protected function assertRequiredField(array $data, $field, array $errors): array
-    {
-        if (!isset($data[$field]) || !array_key_exists($field, $data)) {
-            $message = sprintf('Missing value for required field "%s"', $field);
-            $errors[$field][] = $message;
-        }
-
-        return $errors;
-    }
 }

@@ -2,7 +2,10 @@
 
 namespace FondOfSpryker\Zed\OrderApi\Business;
 
+use Generated\Shared\Transfer\ApiCollectionTransfer;
 use Generated\Shared\Transfer\ApiDataTransfer;
+use Generated\Shared\Transfer\ApiItemTransfer;
+use Generated\Shared\Transfer\ApiRequestTransfer;
 
 /**
  * @method \FondOfSpryker\Zed\OrderApi\Business\OrderApiBusinessFactory getFactory()
@@ -11,18 +14,32 @@ interface OrderApiFacadeInterface
 {
     /**
      * Specification:
+     * - Finds order by order ID.
+     * - Throws OrderNotFoundException if not found.
      *
      * @api
      *
-     * @param \Generated\Shared\Transfer\ApiDataTransfer $apiDataTransfer
+     * @param int $id
      *
      * @return \Generated\Shared\Transfer\ApiItemTransfer
      */
-    public function addOrder(ApiDataTransfer $apiDataTransfer);
+    public function getOrder(int $id): ApiItemTransfer;
 
     /**
      * Specification:
-     * - Validates the given API data and returns an array of errors if necessary.
+     *  - Finds orders by filter transfer, including sort, conditions and pagination.
+     *
+     * @api
+     *
+     * @param \Generated\Shared\Transfer\ApiRequestTransfer $apiRequestTransfer
+     *
+     * @return \Generated\Shared\Transfer\ApiCollectionTransfer
+     */
+    public function findOrders(ApiRequestTransfer $apiRequestTransfer): ApiCollectionTransfer;
+
+    /**
+     * Specification:
+     * - Validate api data.
      *
      * @api
      *
@@ -30,5 +47,5 @@ interface OrderApiFacadeInterface
      *
      * @return array
      */
-    public function validate(ApiDataTransfer $apiDataTransfer);
+    public function validate(ApiDataTransfer $apiDataTransfer): array;
 }

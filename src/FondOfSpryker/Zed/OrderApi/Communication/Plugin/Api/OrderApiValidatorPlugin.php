@@ -20,7 +20,7 @@ class OrderApiValidatorPlugin extends AbstractPlugin implements ApiValidatorPlug
      */
     public function getResourceName()
     {
-        return OrderApiConfig::RESOURCE_ORDER;
+        return OrderApiConfig::RESOURCE_ORDERS;
     }
 
     /**

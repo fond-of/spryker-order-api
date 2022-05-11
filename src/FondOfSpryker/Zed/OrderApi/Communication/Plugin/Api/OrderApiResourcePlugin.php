@@ -37,7 +37,7 @@ class OrderApiResourcePlugin extends AbstractPlugin implements ApiResourcePlugin
     {
         throw new ApiDispatchingException(
             'Add method is not implemented yet.',
-            ApiConfig::HTTP_CODE_NOT_FOUND
+            ApiConfig::HTTP_CODE_NOT_FOUND,
         );
     }
 
@@ -63,7 +63,7 @@ class OrderApiResourcePlugin extends AbstractPlugin implements ApiResourcePlugin
     {
         throw new ApiDispatchingException(
             'Update method is not implemented yet.',
-            ApiConfig::HTTP_CODE_NOT_FOUND
+            ApiConfig::HTTP_CODE_NOT_FOUND,
         );
     }
 
@@ -78,7 +78,7 @@ class OrderApiResourcePlugin extends AbstractPlugin implements ApiResourcePlugin
     {
         throw new ApiDispatchingException(
             'Remove method is not implemented yet.',
-            ApiConfig::HTTP_CODE_NOT_FOUND
+            ApiConfig::HTTP_CODE_NOT_FOUND,
         );
     }
 

@@ -30,7 +30,7 @@ class OrderApiBusinessFactory extends AbstractBusinessFactory
             $this->getApiQueryContainer(),
             $this->getApiQueryBuilderQueryContainer(),
             $this->getQueryContainer(),
-            $this->createTransferMapper()
+            $this->createTransferMapper(),
         );
     }
 

@@ -62,7 +62,6 @@ class OrderApi implements OrderApiInterface
         OrderApiQueryContainerInterface $queryContainer,
         TransferMapperInterface $transferMapper
     ) {
-
         $this->salesFacade = $salesFacade;
         $this->apiQueryContainer = $apiQueryContainer;
         $this->apiQueryBuilderQueryContainer = $apiQueryBuilderQueryContainer;
@@ -118,8 +117,6 @@ class OrderApi implements OrderApiInterface
     }
 
     /**
-     * @throws
-     *
      * @return \Generated\Shared\Transfer\PropelQueryBuilderColumnSelectionTransfer
      */
     protected function buildColumnSelection(): PropelQueryBuilderColumnSelectionTransfer
@@ -145,7 +142,7 @@ class OrderApi implements OrderApiInterface
      *
      * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
      *
-     * @return array|\Generated\Shared\Transfer\ApiCollectionTransfer
+     * @return \Generated\Shared\Transfer\ApiCollectionTransfer
      */
     protected function addPagination(
         ModelCriteria $query,
@@ -188,7 +185,7 @@ class OrderApi implements OrderApiInterface
         if ($orderTransfer === null) {
             throw new EntityNotFoundException(
                 'Could not find order.',
-                ApiConfig::HTTP_CODE_NOT_FOUND
+                ApiConfig::HTTP_CODE_NOT_FOUND,
             );
         }
 

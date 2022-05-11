@@ -11,11 +11,24 @@ use Spryker\Zed\Kernel\Container;
 
 class OrderApiDependencyProvider extends AbstractBundleDependencyProvider
 {
+    /**
+     * @var string
+     */
     public const FACADE_SALES = 'FACADE_SALES';
 
+    /**
+     * @var string
+     */
     public const QUERY_CONTAINER_API = 'QUERY_CONTAINER_API';
+
+    /**
+     * @var string
+     */
     public const QUERY_CONTAINER_API_QUERY_BUILDER = 'QUERY_CONTAINER_API_QUERY_BUILDER';
 
+    /**
+     * @var string
+     */
     public const PROPEL_QUERY_SALES_ORDER = 'PROPEL_QUERY_SALES_ORDER';
 
     /**
@@ -48,6 +61,11 @@ class OrderApiDependencyProvider extends AbstractBundleDependencyProvider
         return $container;
     }
 
+    /**
+     * @param \Spryker\Zed\Kernel\Container $container
+     *
+     * @return \Spryker\Zed\Kernel\Container
+     */
     protected function addSalesFacade(Container $container): Container
     {
         $container[static::FACADE_SALES] = static function (Container $container) {
@@ -80,7 +98,7 @@ class OrderApiDependencyProvider extends AbstractBundleDependencyProvider
     {
         $container[static::QUERY_CONTAINER_API_QUERY_BUILDER] = static function (Container $container) {
             return new OrderApiToApiQueryBuilderQueryContainerBridge(
-                $container->getLocator()->apiQueryBuilder()->queryContainer()
+                $container->getLocator()->apiQueryBuilder()->queryContainer(),
             );
         };
 

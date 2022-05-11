@@ -13,20 +13,18 @@ class TransferMapper implements TransferMapperInterface
      */
     public function toTransfer(array $data): OrderTransfer
     {
-        $orderTransfer = new OrderTransfer();
-        $orderTransfer->fromArray($data, true);
-
-        return $orderTransfer;
+        return (new OrderTransfer())->fromArray($data, true);
     }
 
     /**
      * @param array $data
      *
-     * @return \Generated\Shared\Transfer\OrderTransfer[]
+     * @return array<\Generated\Shared\Transfer\OrderTransfer>
      */
-    public function toTransferCollection(array $data)
+    public function toTransferCollection(array $data): array
     {
         $transferList = [];
+
         foreach ($data as $itemData) {
             $transferList[] = $this->toTransfer($itemData);
         }

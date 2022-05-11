@@ -6,5 +6,8 @@ use Spryker\Zed\Kernel\AbstractBundleConfig;
 
 class OrderApiConfig extends AbstractBundleConfig
 {
-    const RESOURCE_ORDER = 'orders';
+    /**
+     * @var string
+     */
+    public const RESOURCE_ORDERS = 'orders';
 }

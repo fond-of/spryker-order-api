@@ -2,39 +2,47 @@
 
 namespace FondOfSpryker\Zed\OrderApi;
 
-use FondOfSpryker\Zed\InvoiceApi\Dependency\Facade\InvoiceApiToInvoiceBridge;
-use FondOfSpryker\Zed\InvoiceApi\Dependency\Facade\InvoiceApiToProductBridge;
-use FondOfSpryker\Zed\InvoiceApi\Dependency\QueryContainer\InvoiceApiToApiBridge;
-use FondOfSpryker\Zed\OrderApi\Dependency\Facade\OrderApiToProductBridge;
-use FondOfSpryker\Zed\OrderApi\Dependency\Facade\OrderApiToSalesBridge;
-use FondOfSpryker\Zed\OrderApi\Dependency\QueryContainer\OrderApiToApiBridge;
+use FondOfSpryker\Zed\OrderApi\Dependency\Facade\OrderApiToSalesFacadeBridge;
+use FondOfSpryker\Zed\OrderApi\Dependency\QueryContainer\OrderApiToApiQueryBuilderQueryContainerBridge;
+use FondOfSpryker\Zed\OrderApi\Dependency\QueryContainer\OrderApiToApiQueryContainerBridge;
+use Orm\Zed\Sales\Persistence\SpySalesOrderQuery;
 use Spryker\Zed\Kernel\AbstractBundleDependencyProvider;
 use Spryker\Zed\Kernel\Container;
 
 class OrderApiDependencyProvider extends AbstractBundleDependencyProvider
 {
-    const QUERY_CONTAINER_API = 'QUERY_CONTAINER_API';
-    const QUERY_CONTAINER = 'QUERY_CONTAINER';
+    /**
+     * @var string
+     */
+    public const FACADE_SALES = 'FACADE_SALES';
 
-    const FACADE_PRODUCT = 'FACADE_PRODUCT';
-    const FACADE_ORDER = 'FACADE_ORDER';
+    /**
+     * @var string
+     */
+    public const QUERY_CONTAINER_API = 'QUERY_CONTAINER_API';
 
-    const ORDER_SAVER_PLUGINS = 'ORDER_SAVER_PLUGINS';
+    /**
+     * @var string
+     */
+    public const QUERY_CONTAINER_API_QUERY_BUILDER = 'QUERY_CONTAINER_API_QUERY_BUILDER';
+
+    /**
+     * @var string
+     */
+    public const PROPEL_QUERY_SALES_ORDER = 'PROPEL_QUERY_SALES_ORDER';
 
     /**
      * @param \Spryker\Zed\Kernel\Container $container
      *
      * @return \Spryker\Zed\Kernel\Container
      */
-    public function provideBusinessLayerDependencies(Container $container)
+    public function provideBusinessLayerDependencies(Container $container): Container
     {
         $container = parent::provideBusinessLayerDependencies($container);
 
+        $container = $this->addSalesFacade($container);
         $container = $this->provideApiQueryContainer($container);
-        $container = $this->provideQueryContainer($container);
-        $container = $this->provideOrderFacade($container);
-        $container = $this->provideProductFacade($container);
-        $container = $this->provideOrderSaverPlugins($container);
+        $container = $this->provideApiQueryBuilderQueryContainer($container);
 
         return $container;
     }
@@ -44,10 +52,24 @@ class OrderApiDependencyProvider extends AbstractBundleDependencyProvider
      *
      * @return \Spryker\Zed\Kernel\Container
      */
-    protected function provideApiQueryContainer(Container $container)
+    public function providePersistenceLayerDependencies(Container $container): Container
     {
-        $container[static::QUERY_CONTAINER_API] = function (Container $container) {
-            return new OrderApiToApiBridge($container->getLocator()->api()->queryContainer());
+        $container = parent::providePersistenceLayerDependencies($container);
+
+        $container = $this->addSalesOrderPropelQuery($container);
+
+        return $container;
+    }
+
+    /**
+     * @param \Spryker\Zed\Kernel\Container $container
+     *
+     * @return \Spryker\Zed\Kernel\Container
+     */
+    protected function addSalesFacade(Container $container): Container
+    {
+        $container[static::FACADE_SALES] = static function (Container $container) {
+            return new OrderApiToSalesFacadeBridge($container->getLocator()->sales()->facade());
         };
 
         return $container;
@@ -58,36 +80,10 @@ class OrderApiDependencyProvider extends AbstractBundleDependencyProvider
      *
      * @return \Spryker\Zed\Kernel\Container
      */
-    protected function provideQueryContainer(Container $container)
+    protected function provideApiQueryContainer(Container $container): Container
     {
-        $container[static::QUERY_CONTAINER] = function (Container $container) {
-            return $container->getLocator()->sales()->queryContainer();
-        };
-        return $container;
-    }
-
-    /**
-     * @param \Spryker\Zed\Kernel\Container $container
-     *
-     * @return \Spryker\Zed\Kernel\Container
-     */
-    protected function provideOrderFacade(Container $container)
-    {
-        $container[static::FACADE_ORDER] = function (Container $container) {
-            return new OrderApiToSalesBridge($container->getLocator()->sales()->facade());
-        };
-        return $container;
-    }
-
-    /**
-     * @param \Spryker\Zed\Kernel\Container $container
-     *
-     * @return \Spryker\Zed\Kernel\Container
-     */
-    protected function provideProductFacade(Container $container)
-    {
-        $container[static::FACADE_PRODUCT] = function (Container $container) {
-            return new OrderApiToProductBridge($container->getLocator()->product()->facade());
+        $container[static::QUERY_CONTAINER_API] = static function (Container $container) {
+            return new OrderApiToApiQueryContainerBridge($container->getLocator()->api()->queryContainer());
         };
 
         return $container;
@@ -98,21 +94,28 @@ class OrderApiDependencyProvider extends AbstractBundleDependencyProvider
      *
      * @return \Spryker\Zed\Kernel\Container
      */
-    protected function provideOrderSaverPlugins(Container $container)
+    protected function provideApiQueryBuilderQueryContainer(Container $container): Container
     {
-        $container[self::ORDER_SAVER_PLUGINS] = function (Container $container) {
-            return $this->getOrderSaversPlugins($container);
+        $container[static::QUERY_CONTAINER_API_QUERY_BUILDER] = static function (Container $container) {
+            return new OrderApiToApiQueryBuilderQueryContainerBridge(
+                $container->getLocator()->apiQueryBuilder()->queryContainer(),
+            );
         };
 
+        return $container;
     }
 
     /**
      * @param \Spryker\Zed\Kernel\Container $container
      *
-     * @return \Spryker\Zed\Checkout\Dependency\Plugin\CheckoutSaveOrderInterface[]
+     * @return \Spryker\Zed\Kernel\Container
      */
-    protected function getOrderSaverPlugins(Container $container)
+    protected function addSalesOrderPropelQuery(Container $container): Container
     {
-        return [];
+        $container[static::PROPEL_QUERY_SALES_ORDER] = static function () {
+            return SpySalesOrderQuery::create();
+        };
+
+        return $container;
     }
 }

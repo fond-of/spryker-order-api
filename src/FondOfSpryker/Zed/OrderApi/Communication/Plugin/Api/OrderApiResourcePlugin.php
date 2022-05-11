@@ -3,9 +3,12 @@
 namespace FondOfSpryker\Zed\OrderApi\Communication\Plugin\Api;
 
 use FondOfSpryker\Zed\OrderApi\OrderApiConfig;
+use Generated\Shared\Transfer\ApiCollectionTransfer;
 use Generated\Shared\Transfer\ApiDataTransfer;
+use Generated\Shared\Transfer\ApiItemTransfer;
 use Generated\Shared\Transfer\ApiRequestTransfer;
 use Spryker\Zed\Api\ApiConfig;
+use Spryker\Zed\Api\Business\Exception\ApiDispatchingException;
 use Spryker\Zed\Api\Dependency\Plugin\ApiResourcePluginInterface;
 use Spryker\Zed\Kernel\Communication\AbstractPlugin;
 
@@ -16,71 +19,76 @@ use Spryker\Zed\Kernel\Communication\AbstractPlugin;
 class OrderApiResourcePlugin extends AbstractPlugin implements ApiResourcePluginInterface
 {
     /**
-     * @param int $id
-     *
-     * @throws \RuntimeException
-     *
-     * @return void
+     * @return string
      */
-    public function get($id)
+    public function getResourceName(): string
     {
-        throw new RuntimeException('Add action not implemented on core level', ApiConfig::HTTP_CODE_NOT_FOUND);
+        return OrderApiConfig::RESOURCE_ORDERS;
     }
 
     /**
-     * @param int $idStock
      * @param \Generated\Shared\Transfer\ApiDataTransfer $apiDataTransfer
+     *
+     * @throws \Spryker\Zed\Api\Business\Exception\ApiDispatchingException
      *
      * @return \Generated\Shared\Transfer\ApiItemTransfer
      */
-    public function update($idStock, ApiDataTransfer $apiDataTransfer)
+    public function add(ApiDataTransfer $apiDataTransfer): ApiItemTransfer
     {
-        throw new RuntimeException('Update action not implemented on core level', ApiConfig::HTTP_CODE_NOT_FOUND);
+        throw new ApiDispatchingException(
+            'Add method is not implemented yet.',
+            ApiConfig::HTTP_CODE_NOT_FOUND,
+        );
     }
 
     /**
+     * @param int $id
+     *
+     * @return \Generated\Shared\Transfer\ApiItemTransfer
+     */
+    public function get($id): ApiItemTransfer
+    {
+        return $this->getFacade()->getOrder($id);
+    }
+
+    /**
+     * @param int $id
      * @param \Generated\Shared\Transfer\ApiDataTransfer $apiDataTransfer
      *
-     * @throws \RuntimeException
+     * @throws \Spryker\Zed\Api\Business\Exception\ApiDispatchingException
      *
-     * @return void
+     * @return \Generated\Shared\Transfer\ApiItemTransfer
      */
-    public function add(ApiDataTransfer $apiDataTransfer)
+    public function update($id, ApiDataTransfer $apiDataTransfer): ApiItemTransfer
     {
-        return $this->getFacade()->addOrder($apiDataTransfer);
+        throw new ApiDispatchingException(
+            'Update method is not implemented yet.',
+            ApiConfig::HTTP_CODE_NOT_FOUND,
+        );
     }
 
     /**
-     * @param int $idSalesOrder
+     * @param int $id
      *
-     * @throws \RuntimeException
+     * @throws \Spryker\Zed\Api\Business\Exception\ApiDispatchingException
      *
-     * @return void
+     * @return \Generated\Shared\Transfer\ApiItemTransfer
      */
-    public function remove($idSalesOrder)
+    public function remove($id): ApiItemTransfer
     {
-        throw new RuntimeException('Remove action not implemented on core level', ApiConfig::HTTP_CODE_NOT_FOUND);
+        throw new ApiDispatchingException(
+            'Remove method is not implemented yet.',
+            ApiConfig::HTTP_CODE_NOT_FOUND,
+        );
     }
 
     /**
      * @param \Generated\Shared\Transfer\ApiRequestTransfer $apiRequestTransfer
      *
-     * @throws \RuntimeException
-     *
-     * @return void
+     * @return \Generated\Shared\Transfer\ApiCollectionTransfer
      */
-    public function find(ApiRequestTransfer $apiRequestTransfer)
+    public function find(ApiRequestTransfer $apiRequestTransfer): ApiCollectionTransfer
     {
-        throw new RuntimeException('Find action not implemented on core level', ApiConfig::HTTP_CODE_NOT_FOUND);
-    }
-
-    /**
-     * @api
-     *
-     * @return string
-     */
-    public function getResourceName()
-    {
-        return OrderApiConfig::RESOURCE_ORDER;
+        return $this->getFacade()->findOrders($apiRequestTransfer);
     }
 }

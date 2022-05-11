@@ -2,32 +2,41 @@
 
 namespace FondOfSpryker\Zed\OrderApi\Business\Model;
 
-use FondOfSpryker\Zed\InvoiceApi\Dependency\Facade\OrderApiToInvoiceInterface;
-use FondOfSpryker\Zed\OrderApi\Business\Mapper\EntityMapperInterface;
 use FondOfSpryker\Zed\OrderApi\Business\Mapper\TransferMapperInterface;
-use FondOfSpryker\Zed\OrderApi\Dependency\Facade\OrderApiToProductInterface;
-use FondOfSpryker\Zed\OrderApi\Dependency\Facade\OrderApiToSalesInterface;
-use FondOfSpryker\Zed\OrderApi\Dependency\QueryContainer\OrderApiToApiInterface;
-use Generated\Shared\Transfer\ApiDataTransfer;
+use FondOfSpryker\Zed\OrderApi\Dependency\Facade\OrderApiToSalesFacadeInterface;
+use FondOfSpryker\Zed\OrderApi\Dependency\QueryContainer\OrderApiToApiQueryBuilderQueryContainerInterface;
+use FondOfSpryker\Zed\OrderApi\Dependency\QueryContainer\OrderApiToApiQueryContainerInterface;
+use FondOfSpryker\Zed\OrderApi\Persistence\OrderApiQueryContainerInterface;
+use Generated\Shared\Transfer\ApiCollectionTransfer;
 use Generated\Shared\Transfer\ApiItemTransfer;
-use Generated\Shared\Transfer\ItemTransfer;
-use Generated\Shared\Transfer\OrderItemsTransfer;
-use Generated\Shared\Transfer\OrderResponseTransfer;
-use Generated\Shared\Transfer\OrderTransfer;
+use Generated\Shared\Transfer\ApiPaginationTransfer;
+use Generated\Shared\Transfer\ApiQueryBuilderQueryTransfer;
+use Generated\Shared\Transfer\ApiRequestTransfer;
+use Generated\Shared\Transfer\PropelQueryBuilderColumnSelectionTransfer;
+use Generated\Shared\Transfer\PropelQueryBuilderColumnTransfer;
+use Orm\Zed\Sales\Persistence\Map\SpySalesOrderTableMap;
+use Propel\Runtime\ActiveQuery\ModelCriteria;
+use Propel\Runtime\Map\TableMap;
+use Spryker\Zed\Api\ApiConfig;
 use Spryker\Zed\Api\Business\Exception\EntityNotFoundException;
-use Spryker\Zed\Availability\Persistence\AvailabilityQueryContainerInterface;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class OrderApi implements OrderApiInterface
 {
     /**
-     * @var \FondOfSpryker\Zed\OrderApi\Dependency\QueryContainer\OrderApiToApiInterface
+     * @var \FondOfSpryker\Zed\OrderApi\Dependency\Facade\OrderApiToSalesFacadeInterface
+     */
+    protected $salesFacade;
+
+    /**
+     * @var \FondOfSpryker\Zed\OrderApi\Dependency\QueryContainer\OrderApiToApiQueryContainerInterface
      */
     protected $apiQueryContainer;
 
     /**
-     * @var \FondOfSpryker\Zed\OrderApi\Dependency\Facade\OrderApiToSalesInterface
+     * @var \FondOfSpryker\Zed\OrderApi\Dependency\QueryContainer\OrderApiToApiQueryBuilderQueryContainerInterface
      */
-    protected $salesFacade;
+    protected $apiQueryBuilderQueryContainer;
 
     /**
      * @var \FondOfSpryker\Zed\OrderApi\Business\Mapper\TransferMapperInterface
@@ -35,75 +44,151 @@ class OrderApi implements OrderApiInterface
     protected $transferMapper;
 
     /**
-     * @var \FondOfSpryker\Zed\OrderApi\Business\Mapper\EntityMapperInterface
+     * @var \FondOfSpryker\Zed\OrderApi\Persistence\OrderApiQueryContainerInterface
      */
-    protected $entityMapper;
+    protected $queryContainer;
 
     /**
-     * @var \FondOfSpryker\Zed\OrderApi\Dependency\Facade\OrderApiToProductInterface
-     */
-    protected $productFacade;
-
-    /**
-     * OrderApi constructor.
-     *
-     * @param \FondOfSpryker\Zed\OrderApi\Dependency\QueryContainer\OrderApiToApiInterface $apiQueryContainer
-     * @param \FondOfSpryker\Zed\OrderApi\Business\Mapper\EntityMapperInterface $entityMapper
+     * @param \FondOfSpryker\Zed\OrderApi\Dependency\Facade\OrderApiToSalesFacadeInterface $salesFacade
+     * @param \FondOfSpryker\Zed\OrderApi\Dependency\QueryContainer\OrderApiToApiQueryContainerInterface $apiQueryContainer
+     * @param \FondOfSpryker\Zed\OrderApi\Dependency\QueryContainer\OrderApiToApiQueryBuilderQueryContainerInterface $apiQueryBuilderQueryContainer
+     * @param \FondOfSpryker\Zed\OrderApi\Persistence\OrderApiQueryContainerInterface $queryContainer
      * @param \FondOfSpryker\Zed\OrderApi\Business\Mapper\TransferMapperInterface $transferMapper
-     * @param \FondOfSpryker\Zed\OrderApi\Dependency\Facade\OrderApiToSalesInterface $salesFacade
-     * @param \FondOfSpryker\Zed\OrderApi\Dependency\Facade\OrderApiToProductInterface $productFacade
      */
     public function __construct(
-        OrderApiToApiInterface $apiQueryContainer,
-        EntityMapperInterface $entityMapper,
-        TransferMapperInterface $transferMapper,
-        OrderApiToSalesInterface $salesFacade,
-        OrderApiToProductInterface $productFacade
+        OrderApiToSalesFacadeInterface $salesFacade,
+        OrderApiToApiQueryContainerInterface $apiQueryContainer,
+        OrderApiToApiQueryBuilderQueryContainerInterface $apiQueryBuilderQueryContainer,
+        OrderApiQueryContainerInterface $queryContainer,
+        TransferMapperInterface $transferMapper
     ) {
-        $this->apiQueryContainer = $apiQueryContainer;
         $this->salesFacade = $salesFacade;
-        $this->entityMapper = $entityMapper;
+        $this->apiQueryContainer = $apiQueryContainer;
+        $this->apiQueryBuilderQueryContainer = $apiQueryBuilderQueryContainer;
         $this->transferMapper = $transferMapper;
-        $this->productFacade = $productFacade;
+        $this->queryContainer = $queryContainer;
     }
 
     /**
-     * @param \Generated\Shared\Transfer\ApiDataTransfer $apiDataTransfer
+     * @param \Generated\Shared\Transfer\ApiRequestTransfer $apiRequestTransfer
+     *
+     * @return \Generated\Shared\Transfer\ApiCollectionTransfer
+     */
+    public function find(ApiRequestTransfer $apiRequestTransfer): ApiCollectionTransfer
+    {
+        $query = $this->buildQuery($apiRequestTransfer);
+        $collection = $this->transferMapper->toTransferCollection($query->find()->toArray());
+
+        foreach ($collection as $k => $orderApiTransfer) {
+            $collection[$k] = $this->get($orderApiTransfer->getIdSalesOrder())
+                ->getData();
+        }
+
+        $apiCollectionTransfer = $this->apiQueryContainer->createApiCollection($collection);
+        $apiCollectionTransfer = $this->addPagination($query, $apiCollectionTransfer, $apiRequestTransfer);
+
+        return $apiCollectionTransfer;
+    }
+
+    /**
+     * @param \Generated\Shared\Transfer\ApiRequestTransfer $apiRequestTransfer
+     *
+     * @return \Propel\Runtime\ActiveQuery\ModelCriteria
+     */
+    protected function buildQuery(ApiRequestTransfer $apiRequestTransfer): ModelCriteria
+    {
+        $apiQueryBuilderQueryTransfer = $this->buildApiQueryBuilderQuery($apiRequestTransfer);
+        $query = $this->queryContainer->queryFind();
+        $query = $this->apiQueryBuilderQueryContainer->buildQueryFromRequest($query, $apiQueryBuilderQueryTransfer);
+
+        return $query;
+    }
+
+    /**
+     * @param \Generated\Shared\Transfer\ApiRequestTransfer $apiRequestTransfer
+     *
+     * @return \Generated\Shared\Transfer\ApiQueryBuilderQueryTransfer
+     */
+    protected function buildApiQueryBuilderQuery(ApiRequestTransfer $apiRequestTransfer): ApiQueryBuilderQueryTransfer
+    {
+        return (new ApiQueryBuilderQueryTransfer())
+            ->setApiRequest($apiRequestTransfer)
+            ->setColumnSelection($this->buildColumnSelection());
+    }
+
+    /**
+     * @return \Generated\Shared\Transfer\PropelQueryBuilderColumnSelectionTransfer
+     */
+    protected function buildColumnSelection(): PropelQueryBuilderColumnSelectionTransfer
+    {
+        $columnSelectionTransfer = new PropelQueryBuilderColumnSelectionTransfer();
+        $tableColumns = SpySalesOrderTableMap::getFieldNames(TableMap::TYPE_FIELDNAME);
+
+        foreach ($tableColumns as $columnAlias) {
+            $columnTransfer = (new PropelQueryBuilderColumnTransfer())
+                ->setName(SpySalesOrderTableMap::TABLE_NAME . '.' . $columnAlias)
+                ->setAlias($columnAlias);
+
+            $columnSelectionTransfer->addTableColumn($columnTransfer);
+        }
+
+        return $columnSelectionTransfer;
+    }
+
+    /**
+     * @param \Propel\Runtime\ActiveQuery\ModelCriteria $query
+     * @param \Generated\Shared\Transfer\ApiCollectionTransfer $apiCollectionTransfer
+     * @param \Generated\Shared\Transfer\ApiRequestTransfer $apiRequestTransfer
+     *
+     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+     *
+     * @return \Generated\Shared\Transfer\ApiCollectionTransfer
+     */
+    protected function addPagination(
+        ModelCriteria $query,
+        ApiCollectionTransfer $apiCollectionTransfer,
+        ApiRequestTransfer $apiRequestTransfer
+    ): ApiCollectionTransfer {
+        $query->setOffset(0)
+            ->setLimit(-1);
+
+        $total = $query->count();
+        $page = $apiRequestTransfer->getFilter()->getLimit() ? ($apiRequestTransfer->getFilter()->getOffset() / $apiRequestTransfer->getFilter()->getLimit() + 1) : 1;
+        $pageTotal = ($total && $apiRequestTransfer->getFilter()->getLimit()) ? (int)ceil($total / $apiRequestTransfer->getFilter()->getLimit()) : 1;
+
+        if ($page > $pageTotal) {
+            throw new NotFoundHttpException('Out of bounds.', null, ApiConfig::HTTP_CODE_NOT_FOUND);
+        }
+
+        $apiPaginationTransfer = (new ApiPaginationTransfer())
+            ->setItemsPerPage($apiRequestTransfer->getFilter()->getLimit())
+            ->setPage($page)
+            ->setTotal($total)
+            ->setPageTotal($pageTotal);
+
+        $apiCollectionTransfer->setPagination($apiPaginationTransfer);
+
+        return $apiCollectionTransfer;
+    }
+
+    /**
+     * @param int $id
+     *
+     * @throws \Spryker\Zed\Api\Business\Exception\EntityNotFoundException
      *
      * @return \Generated\Shared\Transfer\ApiItemTransfer
      */
-    public function add(ApiDataTransfer $apiDataTransfer): ApiItemTransfer
+    public function get(int $id): ApiItemTransfer
     {
-        $data = (array)$apiDataTransfer->getData();
+        $orderTransfer = $this->salesFacade->findOrderByIdSalesOrder($id);
 
-        $orderTransfer = new OrderTransfer();
-        $orderTransfer->fromArray($data, true);
-
-        $orderResponseTransfer = $this->salesFacade->addOrder($orderTransfer);
-
-        $orderTransfer = $this->getOrderFromResponse($orderResponseTransfer);
-
-        return $this->apiQueryContainer->createApiItem($orderTransfer, $orderTransfer->getIdSalesOrder());
-    }
-
-    /**
-     * @param \Generated\Shared\Transfer\OrderResponseTransfer $orderResponseTransfer
-     *
-     * @return \Generated\Shared\Transfer\OrderTransfer
-     */
-    protected function getOrderFromResponse(OrderResponseTransfer $orderResponseTransfer): OrderTransfer
-    {
-        $orderTransfer = $orderResponseTransfer->getOrderTransfer();
-
-        if (!$orderTransfer) {
-            $errors = [];
-            foreach ($orderResponseTransfer->getErrors() as $error) {
-                $errors[] = $error->getMessage();
-            }
-
-            throw new EntityNotSavedException('Could not save order: ' . implode(',', $errors));
+        if ($orderTransfer === null) {
+            throw new EntityNotFoundException(
+                'Could not find order.',
+                ApiConfig::HTTP_CODE_NOT_FOUND,
+            );
         }
 
-        return $this->salesFacade->findOrderById($orderTransfer);
+        return $this->apiQueryContainer->createApiItem($orderTransfer, $id);
     }
 }

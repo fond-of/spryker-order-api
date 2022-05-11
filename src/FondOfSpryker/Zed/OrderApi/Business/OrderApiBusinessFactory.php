@@ -2,20 +2,21 @@
 
 namespace FondOfSpryker\Zed\OrderApi\Business;
 
-use FondOfSpryker\Zed\InvoiceApi\Business\Model\Validator\InvoiceApiValidator;
-use FondOfSpryker\Zed\OrderApi\Business\Mapper\EntityMapper;
-use FondOfSpryker\Zed\OrderApi\Business\Mapper\EntityMapperInterface;
 use FondOfSpryker\Zed\OrderApi\Business\Mapper\TransferMapper;
 use FondOfSpryker\Zed\OrderApi\Business\Mapper\TransferMapperInterface;
 use FondOfSpryker\Zed\OrderApi\Business\Model\OrderApi;
 use FondOfSpryker\Zed\OrderApi\Business\Model\OrderApiInterface;
 use FondOfSpryker\Zed\OrderApi\Business\Model\Validator\OrderApiValidator;
 use FondOfSpryker\Zed\OrderApi\Business\Model\Validator\OrderApiValidatorInterface;
+use FondOfSpryker\Zed\OrderApi\Dependency\Facade\OrderApiToSalesFacadeInterface;
+use FondOfSpryker\Zed\OrderApi\Dependency\QueryContainer\OrderApiToApiQueryBuilderQueryContainerInterface;
+use FondOfSpryker\Zed\OrderApi\Dependency\QueryContainer\OrderApiToApiQueryContainerInterface;
 use FondOfSpryker\Zed\OrderApi\OrderApiDependencyProvider;
 use Spryker\Zed\Kernel\Business\AbstractBusinessFactory;
 
 /**
  * @method \FondOfSpryker\Zed\OrderApi\OrderApiConfig getConfig()
+ * @method \FondOfSpryker\Zed\OrderApi\Persistence\OrderApiQueryContainer getQueryContainer()
  */
 class OrderApiBusinessFactory extends AbstractBusinessFactory
 {
@@ -25,20 +26,12 @@ class OrderApiBusinessFactory extends AbstractBusinessFactory
     public function createOrderApi(): OrderApiInterface
     {
         return new OrderApi(
+            $this->getSalesFacade(),
             $this->getApiQueryContainer(),
-            $this->createEntityMapper(),
+            $this->getApiQueryBuilderQueryContainer(),
+            $this->getQueryContainer(),
             $this->createTransferMapper(),
-            $this->getOrderFacade(),
-            $this->getProductFacade()
         );
-    }
-
-    /**
-     * @return \FondOfSpryker\Zed\OrderApi\Business\Mapper\EntityMapperInterface
-     */
-    public function createEntityMapper(): EntityMapperInterface
-    {
-        return new EntityMapper();
     }
 
     /**
@@ -57,32 +50,27 @@ class OrderApiBusinessFactory extends AbstractBusinessFactory
         return new OrderApiValidator();
     }
 
-    protected function getApiQueryContainer()
+    /**
+     * @return \FondOfSpryker\Zed\OrderApi\Dependency\QueryContainer\OrderApiToApiQueryContainerInterface
+     */
+    protected function getApiQueryContainer(): OrderApiToApiQueryContainerInterface
     {
         return $this->getProvidedDependency(OrderApiDependencyProvider::QUERY_CONTAINER_API);
     }
 
     /**
-     * @return \FondOfSpryker\Zed\InvoiceApi\Dependency\Facade\InvoiceApiToInvoiceInterface
+     * @return \FondOfSpryker\Zed\OrderApi\Dependency\QueryContainer\OrderApiToApiQueryBuilderQueryContainerInterface
      */
-    protected function getOrderFacade()
+    protected function getApiQueryBuilderQueryContainer(): OrderApiToApiQueryBuilderQueryContainerInterface
     {
-        return $this->getProvidedDependency(OrderApiDependencyProvider::FACADE_ORDER);
+        return $this->getProvidedDependency(OrderApiDependencyProvider::QUERY_CONTAINER_API_QUERY_BUILDER);
     }
 
     /**
-     * @return \FondOfSpryker\Zed\InvoiceApi\Dependency\Facade\InvoiceApiToProductInterface
+     * @return \FondOfSpryker\Zed\OrderApi\Dependency\Facade\OrderApiToSalesFacadeInterface
      */
-    protected function getProductFacade()
+    protected function getSalesFacade(): OrderApiToSalesFacadeInterface
     {
-        return $this->getProvidedDependency(OrderApiDependencyProvider::FACADE_PRODUCT);
-    }
-
-    /**
-     * @return \FondOfSpryker\Zed\ProductList\Dependency\Plugin\ProductListPostSaverPluginInterface[]
-     */
-    public function getOrderSaverPlugins(): array
-    {
-        return $this->getProvidedDependency(OrderApiDependencyProvider::ORDER_SAVER_PLUGINS);
+        return $this->getProvidedDependency(OrderApiDependencyProvider::FACADE_SALES);
     }
 }

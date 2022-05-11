@@ -14,19 +14,17 @@ use Spryker\Zed\Kernel\Communication\AbstractPlugin;
 class OrderApiValidatorPlugin extends AbstractPlugin implements ApiValidatorPluginInterface
 {
     /**
-     * @api
-     *
      * @return string
      */
     public function getResourceName()
     {
-        return OrderApiConfig::RESOURCE_ORDER;
+        return OrderApiConfig::RESOURCE_ORDERS;
     }
 
     /**
      * @param \Generated\Shared\Transfer\ApiDataTransfer $apiDataTransfer
      *
-     * @return \Generated\Shared\Transfer\ApiValidationErrorTransfer[]
+     * @return array<\Generated\Shared\Transfer\ApiValidationErrorTransfer>
      */
     public function validate(ApiDataTransfer $apiDataTransfer)
     {

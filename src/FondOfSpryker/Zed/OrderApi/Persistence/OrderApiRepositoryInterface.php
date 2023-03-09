@@ -1,12 +1,11 @@
 <?php
 
-namespace FondOfSpryker\Zed\OrderApi\Business\Model;
+namespace FondOfSpryker\Zed\OrderApi\Persistence;
 
 use Generated\Shared\Transfer\ApiCollectionTransfer;
-use Generated\Shared\Transfer\ApiItemTransfer;
 use Generated\Shared\Transfer\ApiRequestTransfer;
 
-interface OrderApiInterface
+interface OrderApiRepositoryInterface
 {
     /**
      * @param \Generated\Shared\Transfer\ApiRequestTransfer $apiRequestTransfer
@@ -14,11 +13,4 @@ interface OrderApiInterface
      * @return \Generated\Shared\Transfer\ApiCollectionTransfer
      */
     public function find(ApiRequestTransfer $apiRequestTransfer): ApiCollectionTransfer;
-
-    /**
-     * @param int $idSalesOrder
-     *
-     * @return \Generated\Shared\Transfer\ApiItemTransfer
-     */
-    public function get(int $idSalesOrder): ApiItemTransfer;
 }

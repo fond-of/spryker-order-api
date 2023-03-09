@@ -2,9 +2,9 @@
 
 namespace FondOfSpryker\Zed\OrderApi;
 
+use FondOfSpryker\Zed\OrderApi\Dependency\Facade\OrderApiToApiFacadeBridge;
 use FondOfSpryker\Zed\OrderApi\Dependency\Facade\OrderApiToSalesFacadeBridge;
 use FondOfSpryker\Zed\OrderApi\Dependency\QueryContainer\OrderApiToApiQueryBuilderQueryContainerBridge;
-use FondOfSpryker\Zed\OrderApi\Dependency\QueryContainer\OrderApiToApiQueryContainerBridge;
 use Orm\Zed\Sales\Persistence\SpySalesOrderQuery;
 use Spryker\Zed\Kernel\AbstractBundleDependencyProvider;
 use Spryker\Zed\Kernel\Container;
@@ -19,7 +19,7 @@ class OrderApiDependencyProvider extends AbstractBundleDependencyProvider
     /**
      * @var string
      */
-    public const QUERY_CONTAINER_API = 'QUERY_CONTAINER_API';
+    public const FACADE_API = 'FACADE_API';
 
     /**
      * @var string
@@ -41,10 +41,8 @@ class OrderApiDependencyProvider extends AbstractBundleDependencyProvider
         $container = parent::provideBusinessLayerDependencies($container);
 
         $container = $this->addSalesFacade($container);
-        $container = $this->provideApiQueryContainer($container);
-        $container = $this->provideApiQueryBuilderQueryContainer($container);
 
-        return $container;
+        return $this->addApiFacade($container);
     }
 
     /**
@@ -57,8 +55,9 @@ class OrderApiDependencyProvider extends AbstractBundleDependencyProvider
         $container = parent::providePersistenceLayerDependencies($container);
 
         $container = $this->addSalesOrderPropelQuery($container);
+        $container = $this->addApiQueryBuilderQueryContainer($container);
 
-        return $container;
+        return $this->addApiFacade($container);
     }
 
     /**
@@ -80,10 +79,12 @@ class OrderApiDependencyProvider extends AbstractBundleDependencyProvider
      *
      * @return \Spryker\Zed\Kernel\Container
      */
-    protected function provideApiQueryContainer(Container $container): Container
+    protected function addApiFacade(Container $container): Container
     {
-        $container[static::QUERY_CONTAINER_API] = static function (Container $container) {
-            return new OrderApiToApiQueryContainerBridge($container->getLocator()->api()->queryContainer());
+        $container[static::FACADE_API] = static function (Container $container) {
+            return new OrderApiToApiFacadeBridge(
+                $container->getLocator()->api()->facade(),
+            );
         };
 
         return $container;
@@ -94,7 +95,7 @@ class OrderApiDependencyProvider extends AbstractBundleDependencyProvider
      *
      * @return \Spryker\Zed\Kernel\Container
      */
-    protected function provideApiQueryBuilderQueryContainer(Container $container): Container
+    protected function addApiQueryBuilderQueryContainer(Container $container): Container
     {
         $container[static::QUERY_CONTAINER_API_QUERY_BUILDER] = static function (Container $container) {
             return new OrderApiToApiQueryBuilderQueryContainerBridge(

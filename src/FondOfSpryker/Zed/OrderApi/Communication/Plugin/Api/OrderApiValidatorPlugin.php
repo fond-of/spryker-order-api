@@ -3,8 +3,8 @@
 namespace FondOfSpryker\Zed\OrderApi\Communication\Plugin\Api;
 
 use FondOfSpryker\Zed\OrderApi\OrderApiConfig;
-use Generated\Shared\Transfer\ApiDataTransfer;
-use Spryker\Zed\Api\Dependency\Plugin\ApiValidatorPluginInterface;
+use Generated\Shared\Transfer\ApiRequestTransfer;
+use Spryker\Zed\ApiExtension\Dependency\Plugin\ApiValidatorPluginInterface;
 use Spryker\Zed\Kernel\Communication\AbstractPlugin;
 
 /**
@@ -16,18 +16,18 @@ class OrderApiValidatorPlugin extends AbstractPlugin implements ApiValidatorPlug
     /**
      * @return string
      */
-    public function getResourceName()
+    public function getResourceName(): string
     {
         return OrderApiConfig::RESOURCE_ORDERS;
     }
 
     /**
-     * @param \Generated\Shared\Transfer\ApiDataTransfer $apiDataTransfer
+     * @param \Generated\Shared\Transfer\ApiRequestTransfer $apiRequestTransfer
      *
      * @return array<\Generated\Shared\Transfer\ApiValidationErrorTransfer>
      */
-    public function validate(ApiDataTransfer $apiDataTransfer)
+    public function validate(ApiRequestTransfer $apiRequestTransfer): array
     {
-        return $this->getFacade()->validate($apiDataTransfer);
+        return $this->getFacade()->validate($apiRequestTransfer);
     }
 }

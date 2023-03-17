@@ -13,11 +13,12 @@ use Generated\Shared\Transfer\PropelQueryBuilderColumnTransfer;
 use Orm\Zed\Sales\Persistence\Map\SpySalesOrderTableMap;
 use Propel\Runtime\ActiveQuery\ModelCriteria;
 use Propel\Runtime\Map\TableMap;
+use Spryker\Zed\Kernel\Persistence\AbstractRepository;
 
 /**
  * @method \FondOfSpryker\Zed\OrderApi\Persistence\OrderApiPersistenceFactory getFactory()
  */
-class OrderApiRepository implements OrderApiRepositoryInterface
+class OrderApiRepository extends AbstractRepository implements OrderApiRepositoryInterface
 {
     /**
      * @param \Generated\Shared\Transfer\ApiRequestTransfer $apiRequestTransfer
